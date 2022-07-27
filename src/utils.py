@@ -87,7 +87,8 @@ class strLabelConverterForAttention(object):
             text (str or list of str): texts to convert.
         """
 
-        texts = list(self.dict.keys())[list(self.dict.values()).index(t)]
+        #texts = list(self.dict.keys())[list(self.dict.values()).index(t)]
+        texts = list(self.dict.keys())[list(self.dict.values()).index(t.detach().cpu().numpy())]
         return texts
 
 class strLabelConverterForCTC(object):
@@ -211,7 +212,8 @@ def oneHot(v, v_length, nc):
 
 
 def loadData(v, data):
-    v.data.resize_(data.size()).copy_(data)
+    #v.data.resize_(data.size()).copy_(data)
+    v.resize_(data.size()).copy_(data)
 
 
 def prettyPrint(v):
