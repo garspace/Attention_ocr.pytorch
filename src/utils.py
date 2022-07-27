@@ -52,8 +52,16 @@ class strLabelConverterForAttention(object):
         if isinstance(text, unicode):
             text = [self.dict[item] for item in text]
         elif isinstance(text, collections.Iterable):
-            text = [self.encode(s) for s in text]           # 编码
-
+            #text = [self.encode(s) for s in text]           # 编码
+            #-----------------------python3-----------------------
+            labels=[]
+            for s in text:
+                tmp=[]
+                for c in s:
+                    tmp.append(self.dict[c])
+                labels.append(torch.LongTensor(tmp))
+            text = labels  
+            #------------------------------------------------------
             max_length = max([len(x) for x in text])        # 对齐
             nb = len(text)
             targets = torch.ones(nb, max_length + 2) * 2              # use ‘blank’ for pading
