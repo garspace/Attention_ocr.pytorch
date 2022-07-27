@@ -216,15 +216,16 @@ def trainBatch(encoder, decoder, criterion, encoder_optimizer, decoder_optimizer
     decoder_input = target_variable[0].cuda()      # 初始化decoder的开始,从0开始输出
     decoder_hidden = decoder.initHidden(b).cuda()
     loss = 0.0
-    teach_forcing = True if random.random() > teach_forcing_prob else False
+    teach_forcing = False #True if random.random() > teach_forcing_prob else False
     if teach_forcing:
-        # 教师强制：将目标label作为下一个输入
+        # 教师强制：将目标label作为下一个输入, 难以收敛，不推荐
         for di in range(1, target_variable.shape[0]):           # 最大字符串的长度
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs)
             loss += criterion(decoder_output, target_variable[di])          # 每次预测一个字符
             decoder_input = target_variable[di]  # Teacher forcing/前一次的输出
     else:
+        # 训练与推理保持一致，默认使用该方式
         for di in range(1, target_variable.shape[0]):
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs)
@@ -245,6 +246,8 @@ if __name__ == '__main__':
     for epoch in range(opt.niter):
         train_iter = iter(train_loader)
         i = 0
+        encoder_lr = encoder_optimizer.param_groups[0]['lr']
+        decoder_lr = decoder_optimizer.param_groups[0]['lr']
         while i < len(train_loader)-1:
             for e, d in zip(encoder.parameters(), decoder.parameters()):
                 e.requires_grad = True
@@ -257,13 +260,14 @@ if __name__ == '__main__':
             i += 1
 
             if i % opt.displayInterval == 0:
-                print('[%d/%d][%d/%d] Loss: %f' %
-                    (epoch, opt.niter, i, len(train_loader), loss_avg.val()), end=' ')
+                print('[%d/%d][%d/%d] Loss: %f lr1=%f lr2=%f' %
+                    (epoch, opt.niter, i, len(train_loader), loss_avg.val(),encoder_lr,decoder_lr), end=' ')
                 loss_avg.reset()
                 t1 = time.time()
                 print('time elapsed %d' % (t1-t0))
                 t0 = time.time()
-
+            if i % 1000 == 0:
+                val(encoder, decoder, criterion, 1, dataset=test_dataset, teach_forcing=False)       # batchsize:1
         # do checkpointing
         if epoch % opt.saveInterval == 0:
             val(encoder, decoder, criterion, 1, dataset=test_dataset, teach_forcing=False)            # batchsize:1
