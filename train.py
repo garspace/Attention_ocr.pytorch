@@ -99,7 +99,7 @@ if opt.encoder:
     encoder.load_state_dict(torch.load(opt.encoder))
 if opt.decoder:
     print('loading pretrained encoder model from %s' % opt.decoder)
-    encoder.load_state_dict(torch.load(opt.encoder))
+    decoder.load_state_dict(torch.load(opt.decoder))
 print(encoder)
 print(decoder)
 
@@ -233,9 +233,12 @@ def trainBatch(encoder, decoder, criterion, encoder_optimizer, decoder_optimizer
             topv, topi = decoder_output.data.topk(1)
             ni = topi.squeeze()
             decoder_input = ni
-    encoder.zero_grad()
-    decoder.zero_grad()
+    encoder_optimizer.zero_grad()
+    decoder_optimizer.zero_grad()
     loss.backward()
+    # 梯度裁剪
+    torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
+    torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
     encoder_optimizer.step()
     decoder_optimizer.step()
     return loss
