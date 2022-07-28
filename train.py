@@ -237,8 +237,8 @@ def trainBatch(encoder, decoder, criterion, encoder_optimizer, decoder_optimizer
     decoder_optimizer.zero_grad()
     loss.backward()
     # 梯度裁剪
-    torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
-    torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
+    torch.nn.utils.clip_grad_norm_(encoder.parameters(), 5)
+    torch.nn.utils.clip_grad_norm_(decoder.parameters(), 5)
     encoder_optimizer.step()
     decoder_optimizer.step()
     return loss
